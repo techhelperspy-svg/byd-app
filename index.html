@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Production Task Manager</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Prod Tasks">
+<meta name="theme-color" content="#1A5EAB">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:#1A5EAB;--blue-dark:#0F3E74;--blue-light:#E8F0FB;--blue-mid:#3A7DD4;
+    --teal:#0F7A5A;--teal-light:#E0F4ED;--amber:#B05E0D;--amber-light:#FDF0E0;
+    --red:#B02A2A;--red-light:#FDEAEA;
+    --g50:#F7F7F6;--g100:#EEEEEC;--g200:#DDDDD9;--g400:#9B9B96;--g600:#5A5A57;--g900:#1A1A19;
+    --white:#FFFFFF;--rsm:8px;--rmd:12px;--rlg:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:'DM Sans',sans-serif;background:var(--g50);color:var(--g900);min-height:100vh;display:flex;justify-content:center;}
+  .app{width:100%;max-width:430px;min-height:100vh;background:var(--g50);display:flex;flex-direction:column;}
+  .screen{display:none;flex-direction:column;flex:1;min-height:100vh;}
+  .screen.active{display:flex;}
+
+
+
+  /* HEADER */
+  .hdr{background:var(--blue);padding:16px 20px 14px;flex-shrink:0;}
+  .htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .hg{font-size:12px;color:rgba(255,255,255,0.6);}
+  .hu{font-size:15px;font-weight:600;color:#fff;margin-top:1px;}
+  .hav{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;cursor:pointer;}
+  .srow{display:flex;align-items:center;gap:8px;}
+  .sbtn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s;}
+  .sbtn:active{background:rgba(255,255,255,0.25);}
+  .sbtn:disabled{opacity:.5;cursor:not-allowed;}
+  .sbtn svg{width:13px;height:13px;flex-shrink:0;}
+  .sbtn.spinning svg{animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .stime{font-size:11px;color:rgba(255,255,255,0.5);flex:1;}
+  .xmlbtn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:5px 9px;border-radius:10px;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+  /* TABS */
+  .tabs{display:flex;background:var(--white);border-bottom:1px solid var(--g200);flex-shrink:0;}
+  .tab{flex:1;padding:13px 6px;text-align:center;font-size:12px;font-weight:500;color:var(--g400);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px;}
+  .tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+  .tc{background:var(--blue-light);color:var(--blue);font-size:10px;font-weight:600;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
+  .tab.active .tc{background:var(--blue);color:#fff;}
+
+  /* FILTER */
+  .fb{display:flex;gap:8px;padding:10px 16px;background:var(--white);border-bottom:1px solid var(--g100);flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+  .fb::-webkit-scrollbar{display:none;}
+  .fc{flex-shrink:0;padding:5px 12px;border-radius:16px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;border:1px solid var(--g200);background:var(--white);color:var(--g600);white-space:nowrap;}
+  .fc.active{background:var(--blue-light);color:var(--blue);border-color:#B5CEED;}
+
+  /* TASK LIST */
+  .tl{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;}
+  .tl::-webkit-scrollbar{display:none;}
+
+  /* CARD */
+  .card{background:var(--white);border-radius:var(--rmd);border:1px solid var(--g200);padding:14px 16px;cursor:pointer;transition:all .15s;user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.08);animation:fu .25s ease both;}
+  @keyframes fu{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .card:active{transform:scale(.985);}
+  .card.conf{border-color:var(--teal);background:var(--teal-light);}
+  .ctop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+  .cid{font-family:'DM Mono',monospace;font-size:11px;color:var(--g400);}
+  .cbadges{display:flex;gap:5px;align-items:center;}
+  .badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;text-transform:uppercase;letter-spacing:.03em;}
+  .b-supply{background:var(--blue-light);color:var(--blue);}
+  .b-make{background:#EDE8FA;color:#4A3AAA;}
+  .b-other{background:var(--g100);color:var(--g600);}
+  .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .d1{background:#3AA86A;}.d2{background:var(--amber);}.d3{background:var(--blue-mid);}.d4{background:#3AA86A;}.dX{background:var(--g400);}
+  .cprod{font-size:15px;font-weight:600;color:var(--g900);margin-bottom:6px;}
+  .cmeta{display:flex;gap:10px;font-size:12px;color:var(--g400);flex-wrap:wrap;}
+  .crow{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--g100);}
+  .cass{display:flex;align-items:center;gap:6px;}
+  .aav{width:22px;height:22px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+  .aav.u{background:var(--g100);color:var(--g400);}
+  .aname{font-size:12px;color:var(--g600);}
+  .cbtn{padding:5px 12px;border-radius:16px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;border:1px solid var(--blue);background:transparent;color:var(--blue);}
+  .cbtn:active{transform:scale(.95);}
+  .cbtn.done{background:var(--teal);border-color:var(--teal);color:#fff;cursor:default;}
+
+  /* DRAWER */
+  .dov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:flex-end;justify-content:center;}
+  .dov.open{display:flex;animation:fi .2s ease;}
+  @keyframes fi{from{opacity:0;}to{opacity:1;}}
+  .drawer{background:var(--white);border-radius:24px 24px 0 0;width:100%;max-width:430px;padding:0 0 40px;animation:su .25s ease;max-height:88vh;overflow-y:auto;}
+  @keyframes su{from{transform:translateY(40px);}to{transform:translateY(0);}}
+  .dhandle{width:36px;height:4px;background:var(--g200);border-radius:2px;margin:12px auto;}
+  .dhdr{padding:4px 20px 16px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--g100);}
+  .dtitle{font-size:16px;font-weight:600;}
+  .dsub{font-size:12px;color:var(--g400);margin-top:2px;font-family:'DM Mono',monospace;}
+  .dclose{width:28px;height:28px;border-radius:50%;background:var(--g100);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;font-size:16px;color:var(--g600);flex-shrink:0;}
+  .dbody{padding:16px 20px;}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .dfield{background:var(--g50);border-radius:var(--rsm);padding:10px 12px;}
+  .dlbl{font-size:10px;color:var(--g400);font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;}
+  .dval{font-size:13px;font-weight:500;color:var(--g900);word-break:break-word;}
+  .albl{font-size:12px;font-weight:600;color:var(--g600);margin-bottom:8px;margin-top:4px;}
+  .alist{display:flex;flex-direction:column;gap:6px;}
+  .ap{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--rsm);border:1px solid var(--g200);cursor:pointer;transition:all .15s;background:var(--white);}
+  .ap:hover,.ap.sel{border-color:var(--blue);background:var(--blue-light);}
+  .pav{width:32px;height:32px;border-radius:50%;background:var(--blue-light);color:var(--blue);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .pi{flex:1;}
+  .pname{font-size:13px;font-weight:500;}
+  .prole{font-size:11px;color:var(--g400);}
+  .pchk{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--g200);flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .ap.sel .pchk{background:var(--blue);border-color:var(--blue);}
+  .dcbtn{width:100%;margin-top:14px;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--rsm);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
+  .dcbtn:disabled{background:var(--teal);cursor:default;}
+
+  /* STATES */
+  .es{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:10px;}
+  .ei{width:52px;height:52px;background:var(--g100);border-radius:16px;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+  .etitle{font-size:15px;font-weight:600;color:var(--g600);}
+  .esub{font-size:13px;color:var(--g400);text-align:center;line-height:1.5;}
+  .spin-ring{width:32px;height:32px;border:2.5px solid var(--g200);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:8px;}
+  .errbtn{margin-top:8px;padding:10px 24px;background:var(--blue);color:#fff;border:none;border-radius:var(--rsm);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
+  .chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;}
+  .chip1{background:#D6F5E6;color:#1A7A45;}.chip2{background:var(--amber-light);color:var(--amber);}.chip3{background:var(--blue-light);color:var(--blue);}.chip4{background:#D6F5E6;color:#1A7A45;}.chipC{background:#D6F5E6;color:#1A7A45;}.chipX{background:var(--g100);color:var(--g600);}
+
+  /* ORDER CARD */
+  .order-card{background:var(--white);border-radius:var(--rmd);border:1px solid var(--g200);overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);animation:fu .25s ease both;}
+  .order-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--blue-light);border-bottom:1px solid #D0E4F7;cursor:pointer;}
+  .order-header.conf{background:var(--teal-light);border-bottom-color:#B0E4D0;}
+  .oh-left{display:flex;flex-direction:column;gap:2px;}
+  .oh-orderid{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--blue);}
+  .oh-product{font-size:13px;font-weight:600;color:var(--g900);}
+  .oh-right{display:flex;align-items:center;gap:8px;}
+  .oh-dates{font-size:11px;color:var(--g400);text-align:right;}
+  .oh-status{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .task-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--g100);}
+  .task-row:last-child{border-bottom:none;}
+  .task-row.conf{background:#F0FBF6;}
+  .tr-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+  .tr-icon.supply{background:var(--blue-light);}
+  .tr-icon.make{background:#EDE8FA;}
+  .tr-body{flex:1;min-width:0;}
+  .tr-title{font-size:13px;font-weight:500;color:var(--g900);}
+  .tr-meta{font-size:11px;color:var(--g400);margin-top:2px;}
+  .tr-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+  .tr-qty{font-size:11px;color:var(--g600);font-weight:500;}
+  .tr-cbtn{padding:4px 10px;border-radius:12px;font-size:10px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid var(--blue);background:transparent;color:var(--blue);}
+  .tr-cbtn.done{background:var(--teal);border-color:var(--teal);color:#fff;cursor:default;}
+
+  /* FILTER PANEL */
+  .fpanel{background:var(--white);border-bottom:1px solid var(--g200);padding:12px 16px;flex-shrink:0;}
+  .fpanel-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .fpanel-row:last-child{margin-bottom:0;}
+  .flbl{font-size:11px;font-weight:600;color:var(--g600);min-width:68px;text-transform:uppercase;letter-spacing:.04em;}
+  .finput{flex:1;border:1px solid var(--g200);border-radius:var(--rsm);padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--g900);background:var(--g50);outline:none;}
+  .finput:focus{border-color:var(--blue);}
+  .fapply{padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:var(--rsm);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;white-space:nowrap;}
+  .fapply:active{opacity:.85;}
+  .ftoggle{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;}
+  .ftoggle svg{width:13px;height:13px;}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--g900);color:#fff;font-size:13px;font-weight:500;padding:11px 20px;border-radius:24px;z-index:200;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.1);opacity:0;transition:opacity .2s;pointer-events:none;}
+  .toast.show{opacity:1;}
+
+  /* BOTTOM NAV */
+  .bnav{display:flex;background:var(--white);border-top:1px solid var(--g100);padding:8px 0 20px;flex-shrink:0;}
+  .ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;color:var(--g400);font-size:10px;font-weight:500;transition:color .15s;}
+  .ni.active{color:var(--blue);}
+  .ni svg{width:22px;height:22px;}
+
+  /* RAW XML */
+  .raw{display:none;position:fixed;inset:0;background:#0D0D0D;z-index:300;padding:20px;overflow:auto;}
+  .raw.open{display:block;}
+  .rawbar{position:sticky;top:0;background:#0D0D0D;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .rawbar span{color:#fff;font-size:13px;font-weight:600;}
+  .rawbar button{background:none;border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'DM Sans',sans-serif;}
+  .rawtext{font-family:'DM Mono',monospace;font-size:11px;color:#A8FFB0;line-height:1.7;white-space:pre-wrap;word-break:break-all;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- MAIN -->
+  <div class="screen active" id="mainScreen">
+    <div class="hdr">
+      <div class="htop">
+        <div><div class="hg">SAP Business ByDesign · my433447</div><div class="hu">Production Tasks</div></div>
+        <div class="hav" style="font-size:10px;font-weight:600;background:rgba(255,255,255,0.15);">DEV</div>
+      </div>
+      <div class="srow">
+        <button class="sbtn" id="sbtn" onclick="syncFromByD()">
+          <svg viewBox="0 0 13 13" fill="none" id="sico"><path d="M11.5 6.5A5 5 0 1 1 6.5 1.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M8.5 1l2 2.5-2.5 1" fill="white"/></svg>
+          Sync from ByD
+        </button>
+        <span class="stime" id="stime">Not synced</span>
+        <button class="ftoggle" id="ftoggleBtn" onclick="toggleFilters()">
+          <svg viewBox="0 0 13 13" fill="none"><path d="M1 3h11M3 6.5h7M5 10h3" stroke="white" stroke-width="1.4" stroke-linecap="round"/></svg>
+          Filter <span id="fBadge" style="display:none;background:rgba(255,255,255,0.35);border-radius:8px;padding:1px 6px;font-size:10px;"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTER PANEL -->
+    <div class="fpanel" id="fpanel" style="display:none;">
+      <div class="fpanel-row">
+        <span class="flbl">Records</span>
+        <input class="finput" type="number" id="fCount" value="100" min="1" max="500" placeholder="e.g. 20" onchange="updateFilterBadge()">
+        <button class="fapply" onclick="applyFilters()">Apply</button>
+      </div>
+      <div class="fpanel-row">
+        <span class="flbl">Order ID</span>
+        <input class="finput" type="text" id="fOrderId" placeholder="e.g. 375" onchange="updateFilterBadge()">
+      </div>
+      <div class="fpanel-row">
+        <span class="flbl">From date</span>
+        <input class="finput" type="date" id="fDateFrom" onchange="updateFilterBadge()">
+      </div>
+      <div class="fpanel-row">
+        <span class="flbl">To date</span>
+        <input class="finput" type="date" id="fDateTo" onchange="updateFilterBadge()">
+      </div>
+      <div class="fpanel-row" style="margin-top:4px;">
+        <button class="xmlbtn" style="color:var(--g600);background:var(--g100);border-color:var(--g200);" onclick="showRaw()">View raw XML</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tAll" onclick="switchTab('all')">All <span class="tc" id="cAll">0</span></div>
+      <div class="tab" id="tMine" onclick="switchTab('mine')">My Tasks <span class="tc" id="cMine">0</span></div>
+      <div class="tab" id="tUna" onclick="switchTab('unassigned')">Unassigned <span class="tc" id="cUna">0</span></div>
+    </div>
+
+    <div class="fb">
+      <div class="fc active" onclick="setFilter('All',this)">All</div>
+      <div class="fc" onclick="setFilter('Make',this)">⚙️ Make</div>
+      <div class="fc" onclick="setFilter('Supply',this)">📦 Supply</div>
+      <div class="fc" onclick="setFilter('1',this)">In Preparation</div>
+      <div class="fc" onclick="setFilter('2',this)">Released</div>
+      <div class="fc" onclick="setFilter('3',this)">In Process</div>
+    </div>
+
+    <div class="tl" id="taskList">
+      <div class="es">
+        <div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#9B9B96" stroke-width="1.5"/><line x1="8" y1="9" x2="16" y2="9" stroke="#9B9B96" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="13" y2="13" stroke="#9B9B96" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="etitle">No tasks loaded</div>
+        <div class="esub">Tap "Sync from ByD" to fetch live production lots from SAP Business ByDesign</div>
+      </div>
+    </div>
+
+    <div class="bnav">
+      <div class="ni active"><svg viewBox="0 0 22 22" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="12" y="3" width="7" height="7" rx="1.5" fill="currentColor" opacity=".4"/><rect x="3" y="12" width="7" height="7" rx="1.5" fill="currentColor" opacity=".4"/><rect x="12" y="12" width="7" height="7" rx="1.5" fill="currentColor" opacity=".4"/></svg>Tasks</div>
+      <div class="ni"><svg viewBox="0 0 22 22" fill="none"><circle cx="11" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M3 19c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Profile</div>
+      <div class="ni"><svg viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M11 7v4l2.5 2.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>History</div>
+      <div class="ni"><svg viewBox="0 0 22 22" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M11 8v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="11" cy="15" r=".8" fill="currentColor"/></svg>Settings</div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="dov" id="dov" onclick="closeDr(event)">
+  <div class="drawer">
+    <div class="dhandle"></div>
+    <div class="dhdr">
+      <div><div class="dtitle" id="dtitle">Task Details</div><div class="dsub" id="dsub"></div></div>
+      <button class="dclose" onclick="closeDrD()">×</button>
+    </div>
+    <div class="dbody">
+      <div class="dgrid" id="dgrid"></div>
+      <div class="albl">Assign to</div>
+      <div class="alist" id="alist"></div>
+      <button class="dcbtn" id="dcbtn" onclick="confirmDr()">Confirm Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- RAW XML -->
+<div class="raw" id="rawPanel">
+  <div class="rawbar"><span>SAP ByD SOAP Response</span><button onclick="document.getElementById('rawPanel').classList.remove('open')">Close</button></div>
+  <div class="rawtext" id="rawtext">No response yet.</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Proxy URL config ──────────────────────────────────────────────────────
+// Priority: localStorage 'byd_proxy_url'  →  URL param ?proxy=  →  default
+function getProxyUrl(){
+  try{
+    const ls = localStorage.getItem('byd_proxy_url');
+    if(ls && ls.startsWith('http')) return ls.trim();
+  }catch(_){}
+  const sp = new URLSearchParams(window.location.search).get('proxy');
+  if(sp && sp.startsWith('http')) return sp.trim();
+  // ▼ CHANGE THIS to your deployed Railway / Render / Fly URL:
+  return 'https://byd-proxy.onrender.com/sync';
+}
+const PROXY_URL = getProxyUrl();
+
+// ── Optional: set proxy URL at runtime via console ────────────────────────
+// Run in browser DevTools:  setProxyUrl('https://my-app.up.railway.app/sync')
+function setProxyUrl(newUrl){
+  localStorage.setItem('byd_proxy_url', newUrl);
+  location.reload();
+}
+
+const WORKERS = [
+  {id:'jd',name:'John Doe',role:'Production Worker',i:'JD'},
+  {id:'sm',name:'Sara Miller',role:'Line Supervisor',i:'SM'},
+  {id:'rk',name:'Raj Kumar',role:'Warehouse Staff',i:'RK'},
+  {id:'al',name:'Alice Lee',role:'Production Worker',i:'AL'},
+];
+const SL = {'1':'In Preparation','2':'Released','3':'In Process','4':'Completed','5':'Cancelled','6':'Closed'};
+const SD = {'1':'d3','2':'d1','3':'d2','4':'d4','5':'dX','6':'dX'};
+const SC = {'1':'chip3','2':'chip1','3':'chip2','4':'chip4','5':'chipX','6':'chipX'};
+
+let orders=[],tasks=[],tab='all',filter='All',me='jd',openId=null,selAss=null,holdT=null,rawXml='';
+
+
+function toggleFilters(){
+  const p=document.getElementById('fpanel');
+  const isOpen = p.style.display !== 'none';
+  p.style.display = isOpen ? 'none' : 'block';
+  updateFilterBadge();
+}
+function updateFilterBadge(){
+  const count = parseInt(document.getElementById('fCount').value)||100;
+  const from = document.getElementById('fDateFrom').value||'';
+  const to = document.getElementById('fDateTo').value||'';
+  const orderId = document.getElementById('fOrderId').value||'';
+  let active = 0;
+  if(count !== 100) active++;
+  if(from) active++;
+  if(to) active++;
+  if(orderId) active++;
+  const badge = document.getElementById('fBadge');
+  if(badge){ badge.textContent = active > 0 ? active : ''; badge.style.display = active > 0 ? 'inline' : 'none'; }
+}
+function applyFilters(){
+  syncFromByD();
+}
+
+async function syncFromByD(){
+  const btn=document.getElementById('sbtn');
+  btn.classList.add('spinning');btn.disabled=true;
+  document.getElementById('stime').textContent='Syncing…';
+  showLoading('Connecting to SAP ByD…');
+  const count=parseInt(document.getElementById('fCount').value)||100;
+  const dateFrom=document.getElementById('fDateFrom').value||'';
+  const dateTo=document.getElementById('fDateTo').value||'';
+  const orderId=document.getElementById('fOrderId').value.trim()||'';
+  try{
+    const res=await fetch(PROXY_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({count,dateFrom,dateTo,orderId})
+    });
+    const xml=await res.text();
+    rawXml=xml;
+    if(res.status===401)throw new Error('Authentication failed (401). Check your credentials.');
+    if(!res.ok)throw new Error('SAP ByD returned HTTP '+res.status);
+    let allOrders=parseLots(xml);
+    allOrders=allOrders.filter(o=>!['4','5','6'].includes(o.rawSC));
+    if(orderId){
+      // Flexible match: exact, trimmed, or number-only comparison
+      const oid = orderId.trim();
+      allOrders=allOrders.filter(o=>
+        o.orderId===oid ||
+        o.lotId===oid ||
+        (o.orderId||'').replace(/^0+/,'')===oid.replace(/^0+/,'') ||
+        (o.lotId||'').replace(/^0+/,'')===oid.replace(/^0+/,'')
+      );
+    }
+    if(count && count<allOrders.length) allOrders=allOrders.slice(0,count);
+    orders=allOrders; tasks=orders.flatMap(o=>o.tasks);
+    const now=new Date();
+    document.getElementById('stime').textContent='Synced '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    updCounts();renderTasks();
+    showToast(orders.length+' production order'+(orders.length!==1?'s':'')+' loaded ✓');
+  }catch(e){
+    showErrState(e.message);
+    document.getElementById('stime').textContent='Sync failed';
+    showToast('Error: '+e.message.slice(0,55));
+  }finally{btn.classList.remove('spinning');btn.disabled=false;}
+}
+
+function parseLots(xmlText){
+  const doc=new DOMParser().parseFromString(xmlText,'text/xml');
+  const fault=doc.querySelector('faultstring');
+  if(fault)throw new Error('SOAP Fault: '+fault.textContent);
+
+  const getText=(node,tag)=>{
+    if(!node)return'';
+    const el=node.querySelector(tag);
+    return el?el.textContent.trim():'';
+  };
+
+  const orderList=[];
+  const lotNodes=[...doc.querySelectorAll('ProductionLot')];
+
+  lotNodes.forEach(lot=>{
+    const lotId=getText(lot,'ProductionLotID');
+    const lotUUID=getText(lot,'ProductionLotUUID');
+    const orderId=getText(lot,'ProductionOrderID');
+    const mainProduct=getText(lot,'MainOutputProduct');
+    const site=getText(lot,'MainOutputProductSiteID');
+    const startRaw=getText(lot,'ProductionStartDate');
+    const endRaw=getText(lot,'ProductionEndDate');
+    const lotStatusNode=lot.querySelector('ProductionLotStatus');
+    const lotSC=getText(lotStatusNode,'Life_Cycle_Status_Code')||'3';
+
+    // Get finished product name from any Make group
+    let orderProductName=mainProduct;
+    const allMO=[...lot.querySelectorAll('MaterialOutput')];
+    if(allMO.length){
+      const lastDesc=getText(allMO[allMO.length-1],'ProductDescription');
+      if(lastDesc) orderProductName=lastDesc;
+    }
+
+    const orderTasks=[];
+    const groups=[...lot.querySelectorAll('ConfirmationGroup')];
+    groups.forEach(grp=>{
+      const cgUUID=getText(grp,'ConfirmationGroupUUID');
+      const taskNode=grp.querySelector('ProductionTask');
+      const taskId=getText(taskNode,'ProductionTaskID');
+      const taskUUID=getText(taskNode,'ProducionTaskUUID');
+      const statusNode=taskNode?taskNode.querySelector('Status'):null;
+      const taskStatusCode=getText(statusNode,'ProcessingStatusCode')||lotSC;
+      const opTypeCode=getText(taskNode,'OperationTypeCode');
+      const taskType=opTypeCode==='10'?'Supply':'Make';
+
+      const opNode=grp.querySelector('Operation');
+      const resource=getText(opNode,'ConfirmMainResourceID')||'—';
+
+      const rpNode=grp.querySelector('ReportingPoint');
+      let qty='—', rpUUID='', rpID='', rpUnitCode='EA';
+      if(rpNode){
+        const qEl=rpNode.querySelector('PlannedQuantity');
+        if(qEl){ qty=qEl.textContent.trim()+' '+(qEl.getAttribute('unitCode')||''); rpUnitCode=qEl.getAttribute('unitCode')||'EA'; }
+        rpUUID=getText(rpNode,'ReportingPointUUID');
+        rpID=getText(rpNode,'ReportingPointID');
+      } else {
+        const moNode=grp.querySelector('MaterialOutput');
+        if(moNode){
+          const qEl=moNode.querySelector('PlannedQuantity');
+          if(qEl){ qty=qEl.textContent.trim()+' '+(qEl.getAttribute('unitCode')||''); rpUnitCode=qEl.getAttribute('unitCode')||'EA'; }
+        }
+      }
+
+      // Parse MaterialInput nodes — needed for confirm SOAP
+      const miNodes=[...grp.querySelectorAll('MaterialInput')];
+      const materialInputs=miNodes.map(mi=>{
+        const qEl=mi.querySelector('ConfirmQuantity')||mi.querySelector('PlannedQuantity');
+        return {
+          uuid:     getText(mi,'MaterialInputUUID'),
+          productId:getText(mi,'ProductID'),
+          siteId:   getText(mi,'SiteID')||site,
+          identifiedStockId: getText(mi,'IdentifiedStockID'),
+          confirmQty: qEl?qEl.textContent.trim():'',
+          unitCode:   qEl?qEl.getAttribute('unitCode')||rpUnitCode:rpUnitCode,
+          confirmMethodCode: getText(mi,'ConfirmationMethodCode')||'2',
+        };
+      });
+
+      const moNodes=[...grp.querySelectorAll('MaterialOutput')];
+      let productDesc=mainProduct;
+      // Parse MaterialOutput UUIDs and quantities for confirm step 1
+      const materialOutputs=moNodes.map(mo=>{
+        const qEl=mo.querySelector('ConfirmedQuantity')||mo.querySelector('PlannedQuantity');
+        return {
+          uuid:     getText(mo,'MaterialOutputUUID'),
+          productId:getText(mo,'ProductID'),
+          confirmedQty: qEl?qEl.textContent.trim():'1',
+          unitCode:     qEl?qEl.getAttribute('unitCode')||rpUnitCode:rpUnitCode,
+        };
+      }).filter(mo=>mo.uuid); // only include ones with UUID
+      if(moNodes.length>0){
+        const targetMO=taskType==='Make'?moNodes[moNodes.length-1]:moNodes[0];
+        const desc=getText(targetMO,'ProductDescription');
+        if(desc) productDesc=desc;
+      }
+
+      const actNode=grp.querySelector('Activity');
+      const startDate=fmtDate(getText(actNode,'StartDateTime')||startRaw);
+      const endDate=fmtDate(getText(actNode,'EndDateTime')||endRaw);
+
+      orderTasks.push({
+        id:lotId+'-T'+taskId,
+        lotId, lotUUID, orderId, taskId, taskUUID, cgUUID,
+        rpUUID, rpID, rpUnitCode,
+        materialInputs, materialOutputs,
+        product:productDesc,
+        productCode:mainProduct,
+        site, taskType, resource,
+        qty:qty.trim(),
+        startDate, endDate,
+        rawSC:taskStatusCode,
+        status:SL[taskStatusCode]||taskStatusCode,
+        assignedTo:null, confirmed:false,
+        operationId:getText(opNode,'OperationID')||getText(actNode,'OperationID'),
+      });
+    });
+
+    orderList.push({
+      orderId,
+      lotId,
+      productName: orderProductName,
+      productCode: mainProduct,
+      site,
+      startDate: fmtDate(startRaw),
+      endDate: fmtDate(endRaw),
+      rawSC: lotSC,
+      tasks: orderTasks,
+      assignedTo: null,
+      confirmed: false,
+    });
+  });
+  return orderList;
+}
+
+function fmtDate(r){if(!r)return'—';return r.includes('T')?r.split('T')[0]:r;}
+
+function showLoading(msg){
+  document.getElementById('taskList').innerHTML=`<div class="es"><div class="spin-ring"></div><div class="etitle" style="color:var(--g600)">${msg}</div><div class="esub">my433447.businessbydesign.cloud.sap</div></div>`;
+}
+function showErrState(msg){
+  document.getElementById('taskList').innerHTML=`<div class="es"><div class="ei" style="background:var(--red-light)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#B02A2A" stroke-width="1.5"/><path d="M12 8v5" stroke="#B02A2A" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r=".8" fill="#B02A2A"/></svg></div><div class="etitle" style="color:var(--red)">Connection Failed</div><div class="esub">${msg}<br><br><small>Tip: CORS restricts direct browser→SAP calls. Deploy a backend proxy or run as a native mobile app for production use.</small></div><button class="errbtn" onclick="syncFromByD()">Retry</button></div>`;
+}
+
+function switchTab(t){
+  tab=t;
+  ['all','mine','unassigned'].forEach(x=>{
+    const id='t'+(x==='all'?'All':x==='mine'?'Mine':'Una');
+    document.getElementById(id).classList.toggle('active',x===t);
+  });
+  renderTasks();
+}
+function setFilter(f,el){
+  filter=f;
+  document.querySelectorAll('.fc').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');renderTasks();
+}
+function getVis(){
+  return orders.filter(o=>{
+    const to=tab==='all'?true:tab==='mine'?o.assignedTo===me:!o.assignedTo;
+    const fo=filter==='All'?true:
+      filter==='Make'?o.tasks.some(t=>t.taskType==='Make'):
+      filter==='Supply'?o.tasks.some(t=>t.taskType==='Supply'):
+      o.rawSC===filter;
+    return to&&fo;
+  });
+}
+function updCounts(){
+  document.getElementById('cAll').textContent=orders.length;
+  document.getElementById('cMine').textContent=orders.filter(o=>o.assignedTo===me).length;
+  document.getElementById('cUna').textContent=orders.filter(o=>!o.assignedTo).length;
+}
+function renderTasks(){
+  const list=document.getElementById('taskList'),vis=getVis();
+  if(!vis.length){
+    list.innerHTML=`<div class="es"><div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#9B9B96" stroke-width="1.5"/><line x1="8" y1="9" x2="16" y2="9" stroke="#9B9B96" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="13" y2="13" stroke="#9B9B96" stroke-width="1.5" stroke-linecap="round"/></svg></div><div class="etitle">No orders</div><div class="esub">Try a different filter or tab</div></div>`;
+    return;
+  }
+  list.innerHTML=vis.map((o,i)=>{
+    const sc=o.confirmed?'dX':(SD[o.rawSC]||'dX');
+    const hdrClass=o.confirmed?' conf':'';
+    const w=o.assignedTo?WORKERS.find(x=>x.id===o.assignedTo):null;
+    const statusLabel=o.confirmed?'Confirmed':(SL[o.rawSC]||o.rawSC);
+
+    // Filter tasks inside order based on current filter
+    const visibleTasks=filter==='All'?o.tasks:
+      filter==='Supply'?o.tasks.filter(t=>t.taskType==='Supply'):
+      filter==='Make'?o.tasks.filter(t=>t.taskType==='Make'):o.tasks;
+
+    const taskRows=visibleTasks.map(t=>{
+      const tIcon=t.taskType==='Supply'?'📦':'⚙️';
+      const tIconClass=t.taskType==='Supply'?'supply':'make';
+      const tStatus=t.confirmed?'Confirmed':(SL[t.rawSC]||t.rawSC);
+      return `<div class="task-row${t.confirmed?' conf':''}"
+        onmousedown="stHold('${t.id}')" onmouseup="enHold()" onmouseleave="enHold()"
+        ontouchstart="stHold('${t.id}')" ontouchend="enHold()">
+        <div class="tr-icon ${tIconClass}">${tIcon}</div>
+        <div class="tr-body">
+          <div class="tr-title">${t.taskType} Task · #${t.taskId}</div>
+          <div class="tr-meta">${t.startDate}${t.resource!=='—'?' · '+t.resource:''}</div>
+        </div>
+        <div class="tr-right">
+          <span class="tr-qty">${t.qty||''}</span>
+          <button class="tr-cbtn${t.confirmed?' done':''}" onclick="qConfirm(event,'${t.id}')">
+            ${t.confirmed?'✓':'Confirm'}
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="order-card" style="animation-delay:${i*.04}s">
+      <div class="order-header${hdrClass}" onclick="toggleOrder('${o.orderId}')">
+        <div class="oh-left">
+          <span class="oh-orderid">Order #${o.orderId}</span>
+          <span class="oh-product">${o.productName}</span>
+        </div>
+        <div class="oh-right">
+          <div class="oh-dates">
+            ${o.startDate!=='—'?o.startDate:''}<br>
+            <span style="color:var(--g600);font-weight:500;">${statusLabel}</span>
+          </div>
+          <span class="oh-status ${sc}"></span>
+        </div>
+      </div>
+      <div id="ord-${o.orderId}">
+        ${taskRows}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:var(--g50);border-top:1px solid var(--g100);">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="aav${w?'':' u'}" style="width:20px;height:20px;font-size:8px;">${w?w.i:'?'}</div>
+            <span style="font-size:11px;color:var(--g600);">${w?w.name:'Unassigned'}</span>
+          </div>
+          <button class="tr-cbtn${o.confirmed?' done':''}" style="font-size:11px;padding:5px 12px;" onclick="qConfirmOrder(event,'${o.orderId}')">
+            ${o.confirmed?'✓ Done':'Confirm Order'}
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleOrder(orderId){
+  const el=document.getElementById('ord-'+orderId);
+  if(el) el.style.display=el.style.display==='none'?'':'none';
+}
+
+function stHold(id){holdT=setTimeout(()=>openDr(id),700);}
+function enHold(){clearTimeout(holdT);}
+
+function qConfirm(e,id){
+  e.stopPropagation();
+  // find in all orders' tasks
+  let found=null;
+  orders.forEach(o=>{ const t=o.tasks.find(x=>x.id===id); if(t) found=t; });
+  if(!found||found.confirmed)return;
+  found.confirmed=true; found.status='Confirmed';
+  updCounts();renderTasks();showToast('Task confirmed ✓');
+}
+function qConfirmOrder(e,orderId){
+  e.stopPropagation();
+  const o=orders.find(x=>x.orderId===orderId);
+  if(!o||o.confirmed)return;
+  o.confirmed=true; o.tasks.forEach(t=>{t.confirmed=true;t.status='Confirmed';});
+  updCounts();renderTasks();showToast('Order #'+orderId+' confirmed ✓');
+}
+
+function openDr(id){
+  const t=orders.flatMap(o=>o.tasks).find(x=>x.id===id);if(!t)return;
+  openId=id;selAss=t.assignedTo;
+  document.getElementById('dtitle').textContent=t.product;
+  document.getElementById('dsub').textContent=t.id;
+  const sc=t.confirmed?'chipC':(SC[t.rawSC]||'chipX');
+  const sl=t.confirmed?'Confirmed':(SL[t.rawSC]||t.rawSC);
+  document.getElementById('dgrid').innerHTML=[
+    ['Task Type',t.taskType],
+    ['Status',`<span class="chip ${sc}">${sl}</span>`],
+    ['Start Date',t.startDate],
+    ['End Date',t.endDate],
+    ['Quantity',t.qty||'—'],
+    ['Resource',t.resource||'—'],
+    ['Site',t.site||'—'],
+    ['Product Code',t.productCode||'—'],
+    ['Order ID',t.orderId||'—'],
+    ['Lot ID',t.lotId||'—'],
+  ].map(([l,v])=>`<div class="dfield"><div class="dlbl">${l}</div><div class="dval">${v}</div></div>`).join('');
+  document.getElementById('alist').innerHTML=WORKERS.map(w=>
+    `<div class="ap${selAss===w.id?' sel':''}" id="ap${w.id}" onclick="selA('${w.id}')">
+      <div class="pav">${w.i}</div>
+      <div class="pi"><div class="pname">${w.name}</div><div class="prole">${w.role}</div></div>
+      <div class="pchk">${selAss===w.id?'<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</div>
+    </div>`).join('');
+  const btn=document.getElementById('dcbtn');
+  btn.textContent=t.confirmed?'✓ Already Confirmed':'Confirm Task';
+  btn.disabled=t.confirmed;
+  document.getElementById('dov').classList.add('open');
+}
+
+function selA(id){
+  selAss=selAss===id?null:id;
+  document.querySelectorAll('.ap').forEach(el=>{
+    const wid=el.id.replace('ap','');const s=wid===selAss;
+    el.classList.toggle('sel',s);
+    const c=el.querySelector('.pchk');
+    c.innerHTML=s?'<svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':'';
+    c.style.background=s?'var(--blue)':'';c.style.borderColor=s?'var(--blue)':'';
+  });
+}
+
+async function confirmDr(){
+  if(!openId)return;
+  const t=orders.flatMap(o=>o.tasks).find(x=>x.id===openId);
+  if(!t||t.confirmed)return;
+
+  // Use stored unit code from SAP, fallback to parsing qty string
+  const qtyParts=(t.qty||'1 EA').trim().split(' ');
+  const confirmedQty=parseFloat(qtyParts[0])||1;
+  const unitCode=t.rpUnitCode||qtyParts[1]||'EA';
+
+  // Debug: log all UUIDs to console
+  console.log('Task UUIDs:', {
+    lotId: t.lotId, lotUUID: t.lotUUID,
+    cgUUID: t.cgUUID, taskId: t.taskId, taskUUID: t.taskUUID,
+    materialOutputs: t.materialOutputs
+  });
+
+  if(!t.taskUUID){
+    showToast('Missing ProducionTaskUUID — check console for details');
+    console.error('MISSING taskUUID. Full task:', JSON.stringify(t));
+    return;
+  }
+  if(!t.lotUUID){ showToast('Missing lotUUID — re-sync'); return; }
+  if(!t.cgUUID){  showToast('Missing cgUUID — re-sync');  return; }
+
+  const btn=document.getElementById('dcbtn');
+  btn.textContent='Confirming…'; btn.disabled=true;
+
+  // Build payload — include ReportingPointUUID if available
+  const payload={
+    lotId:     t.lotId,
+    lotUUID:   t.lotUUID,
+    cgUUID:    t.cgUUID,
+    taskId:    t.taskId,
+    taskUUID:  t.taskUUID,
+    materialOutputs: (t.materialOutputs||[]).map(mo=>({
+      ...mo,
+      confirmedQty: confirmedQty,
+      unitCode:     unitCode,
+    })),
+  };
+
+  console.log('Confirm payload:', JSON.stringify(payload));
+
+  try{
+    const CONFIRM_URL=PROXY_URL.replace('/sync','/confirm');
+    const res=await fetch(CONFIRM_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const xml=await res.text();
+    console.log('SAP confirm response:', xml);
+
+    if(!res.ok) throw new Error('HTTP '+res.status+': '+xml.slice(0,200));
+
+    const doc2=new DOMParser().parseFromString(xml,'text/xml');
+    const fault=doc2.querySelector('faultstring');
+    if(fault) throw new Error('SAP Fault: '+fault.textContent);
+
+    // Check all log items for errors
+    const logItems=[...doc2.querySelectorAll('ProductionLotLog')];
+    const errors=logItems.filter(l=>{
+      const sev=l.querySelector('SeverityCode');
+      return sev&&(sev.textContent==='E'||sev.textContent==='A');
+    });
+    if(errors.length){
+      const msg=errors.map(e=>e.querySelector('Note')?e.querySelector('Note').textContent:'').join('; ');
+      throw new Error('SAP Error: '+msg);
+    }
+
+    const excMsg=doc2.querySelector('ExceptionMessage Message');
+    if(excMsg&&excMsg.textContent) throw new Error('SAP: '+excMsg.textContent);
+
+    // Success
+    if(selAss) t.assignedTo=selAss;
+    t.confirmed=true; t.status='Confirmed';
+    const o=orders.find(x=>x.lotId===t.lotId);
+    if(o&&o.tasks.every(x=>x.confirmed)) o.confirmed=true;
+    updCounts(); renderTasks(); closeDrD();
+    showToast('\u2713 Confirmed in SAP ByD');
+  }catch(e){
+    console.error('Confirm error:', e);
+    showToast('Confirm failed: '+e.message.slice(0,80));
+    btn.textContent='Confirm Task'; btn.disabled=false;
+  }
+}
+
+function closeDr(e){if(e.target===document.getElementById('dov'))closeDrD();}
+function closeDrD(){document.getElementById('dov').classList.remove('open');openId=null;}
+
+function showRaw(){
+  document.getElementById('rawtext').textContent=rawXml||'No response yet. Sync first.';
+  document.getElementById('rawPanel').classList.add('open');
+}
+
+function showToast(m){
+  const t=document.getElementById('toast');
+  t.textContent=m;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+<script>
+// Force clear all old caches and service workers on every load
+if('serviceWorker' in navigator){
+  // Unregister ALL old service workers first
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(reg=>reg.unregister());
+  });
+  // Clear all caches
+  if('caches' in window){
+    caches.keys().then(keys=>{
+      keys.forEach(key=>caches.delete(key));
+    });
+  }
+  // Re-register fresh
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js?v=3')
+      .then(reg=>{
+        // Force update immediately
+        reg.update();
+        console.log('SW registered v3');
+      })
+      .catch(e=>console.log('SW error',e));
+  });
+}
+</script>
+</body>
+</html>
