@@ -32,8 +32,6 @@
   .screen{display:none;flex-direction:column;flex:1;min-height:100vh;}
   .screen.active{display:flex;}
 
-
-
   /* HEADER */
   .hdr{background:var(--blue);padding:16px 20px 14px;flex-shrink:0;}
   .htop{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
@@ -49,6 +47,11 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .stime{font-size:11px;color:rgba(255,255,255,0.5);flex:1;}
   .xmlbtn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:5px 9px;border-radius:10px;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+  /* MODE BADGE */
+  .mode-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;letter-spacing:.04em;}
+  .mode-odata{background:rgba(16,200,120,0.18);color:#0FD890;border:1px solid rgba(16,200,120,0.3);}
+  .mode-soap{background:rgba(255,200,60,0.18);color:#FFD060;border:1px solid rgba(255,200,60,0.3);}
 
   /* TABS */
   .tabs{display:flex;background:var(--white);border-bottom:1px solid var(--g200);flex-shrink:0;}
@@ -92,6 +95,14 @@
   .cbtn:active{transform:scale(.95);}
   .cbtn.done{background:var(--teal);border-color:var(--teal);color:#fff;cursor:default;}
 
+  /* ERROR BANNER */
+  .err-banner{background:var(--red-light);border:1px solid #F5BABA;border-radius:var(--rsm);padding:12px 14px;margin-bottom:12px;display:flex;gap:10px;align-items:flex-start;}
+  .err-banner-icon{font-size:16px;flex-shrink:0;margin-top:1px;}
+  .err-banner-body{flex:1;}
+  .err-banner-title{font-size:13px;font-weight:600;color:var(--red);margin-bottom:3px;}
+  .err-banner-msg{font-size:12px;color:#7A2020;line-height:1.5;word-break:break-word;}
+  .err-banner-close{font-size:16px;color:var(--red);cursor:pointer;padding:0 2px;background:none;border:none;flex-shrink:0;}
+
   /* DRAWER */
   .dov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;display:none;align-items:flex-end;justify-content:center;}
   .dov.open{display:flex;animation:fi .2s ease;}
@@ -120,6 +131,10 @@
   .ap.sel .pchk{background:var(--blue);border-color:var(--blue);}
   .dcbtn{width:100%;margin-top:14px;padding:15px;background:var(--blue);color:#fff;border:none;border-radius:var(--rsm);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;}
   .dcbtn:disabled{background:var(--teal);cursor:default;}
+
+  /* Drawer error */
+  .dr-err{background:var(--red-light);border:1px solid #F5BABA;border-radius:var(--rsm);padding:10px 12px;margin-top:12px;font-size:12px;color:var(--red);line-height:1.5;display:none;}
+  .dr-err.show{display:block;}
 
   /* STATES */
   .es{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:10px;}
@@ -167,6 +182,10 @@
   .ftoggle{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:20px;padding:7px 12px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;}
   .ftoggle svg{width:13px;height:13px;}
 
+  /* ODATA mode hint */
+  .odata-hint{background:rgba(16,200,120,0.08);border:1px solid rgba(16,200,120,0.2);border-radius:var(--rsm);padding:8px 12px;font-size:11px;color:#0AA870;margin-top:4px;display:none;}
+  .odata-hint.show{display:block;}
+
   /* TOAST */
   .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--g900);color:#fff;font-size:13px;font-weight:500;padding:11px 20px;border-radius:24px;z-index:200;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.1);opacity:0;transition:opacity .2s;pointer-events:none;}
   .toast.show{opacity:1;}
@@ -177,7 +196,7 @@
   .ni.active{color:var(--blue);}
   .ni svg{width:22px;height:22px;}
 
-  /* RAW XML */
+  /* RAW */
   .raw{display:none;position:fixed;inset:0;background:#0D0D0D;z-index:300;padding:20px;overflow:auto;}
   .raw.open{display:block;}
   .rawbar{position:sticky;top:0;background:#0D0D0D;padding-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
@@ -193,11 +212,17 @@
   <div class="screen active" id="mainScreen">
     <div class="hdr">
       <div class="htop">
-        <div><div class="hg">SAP Business ByDesign · my433447</div><div class="hu">Production Tasks</div></div>
+        <div>
+          <div class="hg">SAP Business ByDesign · my433447</div>
+          <div class="hu" style="display:flex;align-items:center;gap:8px;">
+            Production Tasks
+            <span class="mode-badge mode-soap" id="modeBadge">SOAP</span>
+          </div>
+        </div>
         <div class="hav" style="font-size:10px;font-weight:600;background:rgba(255,255,255,0.15);">DEV</div>
       </div>
       <div class="srow">
-        <button class="sbtn" id="sbtn" onclick="syncFromByD()">
+        <button class="sbtn" id="sbtn" onclick="syncNow()">
           <svg viewBox="0 0 13 13" fill="none" id="sico"><path d="M11.5 6.5A5 5 0 1 1 6.5 1.5" stroke="white" stroke-width="1.4" stroke-linecap="round"/><path d="M8.5 1l2 2.5-2.5 1" fill="white"/></svg>
           Sync from ByD
         </button>
@@ -212,13 +237,24 @@
     <!-- FILTER PANEL -->
     <div class="fpanel" id="fpanel" style="display:none;">
       <div class="fpanel-row">
-        <span class="flbl">Records</span>
-        <input class="finput" type="number" id="fCount" value="100" min="1" max="500" placeholder="e.g. 20" onchange="updateFilterBadge()">
+        <span class="flbl">Task ID</span>
+        <input class="finput" type="text" id="fTaskId" placeholder="e.g. 3633 → OData lookup"
+          oninput="onTaskIdInput()" onchange="updateFilterBadge()">
         <button class="fapply" onclick="applyFilters()">Apply</button>
+      </div>
+      <!-- OData mode hint shown when Task ID is entered -->
+      <div class="odata-hint" id="odataHint">
+        ⚡ OData mode — will query ProductionTaskCollection by Task ID
+      </div>
+      <div class="fpanel-row" style="margin-top:4px;">
+        <span class="flbl">Records</span>
+        <input class="finput" type="number" id="fCount" value="100" min="1" max="500"
+          placeholder="e.g. 20" oninput="onTaskIdInput()" onchange="updateFilterBadge()">
       </div>
       <div class="fpanel-row">
         <span class="flbl">Order ID</span>
-        <input class="finput" type="text" id="fOrderId" placeholder="e.g. 375" onchange="updateFilterBadge()">
+        <input class="finput" type="text" id="fOrderId" placeholder="e.g. 375 (SOAP mode)"
+          onchange="updateFilterBadge()">
       </div>
       <div class="fpanel-row">
         <span class="flbl">From date</span>
@@ -229,7 +265,8 @@
         <input class="finput" type="date" id="fDateTo" onchange="updateFilterBadge()">
       </div>
       <div class="fpanel-row" style="margin-top:4px;">
-        <button class="xmlbtn" style="color:var(--g600);background:var(--g100);border-color:var(--g200);" onclick="showRaw()">View raw XML</button>
+        <button class="xmlbtn" style="color:var(--g600);background:var(--g100);border-color:var(--g200);"
+          onclick="showRaw()">View raw response</button>
       </div>
     </div>
 
@@ -248,11 +285,21 @@
       <div class="fc" onclick="setFilter('3',this)">In Process</div>
     </div>
 
+    <!-- Global error banner -->
+    <div class="err-banner" id="globalErr" style="display:none;margin:10px 16px 0;">
+      <span class="err-banner-icon">⚠️</span>
+      <div class="err-banner-body">
+        <div class="err-banner-title" id="globalErrTitle">Error</div>
+        <div class="err-banner-msg" id="globalErrMsg"></div>
+      </div>
+      <button class="err-banner-close" onclick="hideGlobalErr()">×</button>
+    </div>
+
     <div class="tl" id="taskList">
       <div class="es">
         <div class="ei"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" stroke="#9B9B96" stroke-width="1.5"/><line x1="8" y1="9" x2="16" y2="9" stroke="#9B9B96" stroke-width="1.5" stroke-linecap="round"/><line x1="8" y1="13" x2="13" y2="13" stroke="#9B9B96" stroke-width="1.5" stroke-linecap="round"/></svg></div>
         <div class="etitle">No tasks loaded</div>
-        <div class="esub">Tap "Sync from ByD" to fetch live production lots from SAP Business ByDesign</div>
+        <div class="esub">Enter a Task ID and tap Sync for OData lookup,<br>or sync without a Task ID to load all orders via SOAP</div>
       </div>
     </div>
 
@@ -278,13 +325,15 @@
       <div class="albl">Assign to</div>
       <div class="alist" id="alist"></div>
       <button class="dcbtn" id="dcbtn" onclick="confirmDr()">Confirm Task</button>
+      <!-- Drawer-level error shown inline after failed confirm -->
+      <div class="dr-err" id="drErr"></div>
     </div>
   </div>
 </div>
 
-<!-- RAW XML -->
+<!-- RAW RESPONSE -->
 <div class="raw" id="rawPanel">
-  <div class="rawbar"><span>SAP ByD SOAP Response</span><button onclick="document.getElementById('rawPanel').classList.remove('open')">Close</button></div>
+  <div class="rawbar"><span>SAP ByD Raw Response</span><button onclick="document.getElementById('rawPanel').classList.remove('open')">Close</button></div>
   <div class="rawtext" id="rawtext">No response yet.</div>
 </div>
 
@@ -292,72 +341,189 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ── Proxy URL config ──────────────────────────────────────────────────────
-// Priority: localStorage 'byd_proxy_url'  →  URL param ?proxy=  →  default
-function getProxyUrl(){
+// ── Proxy URL ────────────────────────────────────────────────────────────
+function getProxyBase(){
   try{
-    const ls = localStorage.getItem('byd_proxy_url');
-    if(ls && ls.startsWith('http')) return ls.trim();
+    const ls=localStorage.getItem('byd_proxy_url');
+    if(ls&&ls.startsWith('http'))return ls.trim().replace(/\/sync$/,'');
   }catch(_){}
-  const sp = new URLSearchParams(window.location.search).get('proxy');
-  if(sp && sp.startsWith('http')) return sp.trim();
-  // ▼ CHANGE THIS to your deployed Railway / Render / Fly URL:
-  return 'https://byd-proxy.onrender.com/sync';
+  const sp=new URLSearchParams(window.location.search).get('proxy');
+  if(sp&&sp.startsWith('http'))return sp.trim().replace(/\/sync$/,'');
+  return 'https://byd-proxy.onrender.com';
 }
-const PROXY_URL = getProxyUrl();
+const BASE_URL   = getProxyBase();
+const PROXY_URL  = BASE_URL + '/sync';
+const TASK_URL   = BASE_URL + '/task-query';   // NEW – OData GET
+const CONFIRM_URL= BASE_URL + '/task-confirm'; // NEW – OData POST confirm
 
-// ── Optional: set proxy URL at runtime via console ────────────────────────
-// Run in browser DevTools:  setProxyUrl('https://my-app.up.railway.app/sync')
-function setProxyUrl(newUrl){
-  localStorage.setItem('byd_proxy_url', newUrl);
-  location.reload();
-}
+function setProxyUrl(u){ localStorage.setItem('byd_proxy_url',u); location.reload(); }
 
-const WORKERS = [
+// ── Workers ──────────────────────────────────────────────────────────────
+const WORKERS=[
   {id:'jd',name:'John Doe',role:'Production Worker',i:'JD'},
   {id:'sm',name:'Sara Miller',role:'Line Supervisor',i:'SM'},
   {id:'rk',name:'Raj Kumar',role:'Warehouse Staff',i:'RK'},
   {id:'al',name:'Alice Lee',role:'Production Worker',i:'AL'},
 ];
-const SL = {'1':'In Preparation','2':'Released','3':'In Process','4':'Completed','5':'Cancelled','6':'Closed'};
-const SD = {'1':'d3','2':'d1','3':'d2','4':'d4','5':'dX','6':'dX'};
-const SC = {'1':'chip3','2':'chip1','3':'chip2','4':'chip4','5':'chipX','6':'chipX'};
+const SL={'1':'In Preparation','2':'Released','3':'In Process','4':'Completed','5':'Cancelled','6':'Closed'};
+const SD={'1':'d3','2':'d1','3':'d2','4':'d4','5':'dX','6':'dX'};
+const SC={'1':'chip3','2':'chip1','3':'chip2','4':'chip4','5':'chipX','6':'chipX'};
 
 let orders=[],tasks=[],tab='all',filter='All',me='jd',openId=null,selAss=null,holdT=null,rawXml='';
 
-
+// ── Filter UI ────────────────────────────────────────────────────────────
+function onTaskIdInput(){
+  const taskId=(document.getElementById('fTaskId').value||'').trim();
+  const hint=document.getElementById('odataHint');
+  const badge=document.getElementById('modeBadge');
+  if(taskId){
+    hint.classList.add('show');
+    badge.textContent='OData';
+    badge.className='mode-badge mode-odata';
+  } else {
+    hint.classList.remove('show');
+    badge.textContent='SOAP';
+    badge.className='mode-badge mode-soap';
+  }
+}
 function toggleFilters(){
   const p=document.getElementById('fpanel');
-  const isOpen = p.style.display !== 'none';
-  p.style.display = isOpen ? 'none' : 'block';
+  p.style.display=p.style.display==='none'?'block':'none';
   updateFilterBadge();
 }
 function updateFilterBadge(){
-  const count = parseInt(document.getElementById('fCount').value)||100;
-  const from = document.getElementById('fDateFrom').value||'';
-  const to = document.getElementById('fDateTo').value||'';
-  const orderId = document.getElementById('fOrderId').value||'';
-  let active = 0;
-  if(count !== 100) active++;
-  if(from) active++;
-  if(to) active++;
-  if(orderId) active++;
-  const badge = document.getElementById('fBadge');
-  if(badge){ badge.textContent = active > 0 ? active : ''; badge.style.display = active > 0 ? 'inline' : 'none'; }
+  const count=parseInt(document.getElementById('fCount').value)||100;
+  const from=document.getElementById('fDateFrom').value||'';
+  const to=document.getElementById('fDateTo').value||'';
+  const orderId=document.getElementById('fOrderId').value||'';
+  const taskId=document.getElementById('fTaskId').value||'';
+  let active=0;
+  if(count!==100)active++;if(from)active++;if(to)active++;if(orderId)active++;if(taskId)active++;
+  const badge=document.getElementById('fBadge');
+  if(badge){badge.textContent=active>0?active:'';badge.style.display=active>0?'inline':'none';}
 }
-function applyFilters(){
-  syncFromByD();
+function applyFilters(){ syncNow(); }
+
+// ── Entry point: choose OData or SOAP ────────────────────────────────────
+function syncNow(){
+  const taskId=(document.getElementById('fTaskId').value||'').trim();
+  if(taskId){ syncOData(taskId); }
+  else       { syncFromByD();    }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// ── OData SYNC (Task ID entered) ─────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+async function syncOData(taskId){
+  setSyncing(true,'Querying OData…');
+  hideGlobalErr();
+  try{
+    const res=await fetch(TASK_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({taskId})
+    });
+    const text=await res.text();
+    rawXml=text;                             // store for "view raw"
+    if(!res.ok) throw new Error('HTTP '+res.status+': '+text.slice(0,200));
+
+    let json;
+    try{ json=JSON.parse(text); }
+    catch(e){ throw new Error('Invalid JSON from proxy: '+text.slice(0,120)); }
+
+    // SAP OData error envelope
+    if(json.error){ throw new Error(json.error.message?.value || JSON.stringify(json.error)); }
+
+    const results=(json.d?.results)||[];
+    if(!results.length){
+      showGlobalErr('Not Found','No task found with Task ID "'+taskId+'" in SAP ByD.');
+      orders=[];tasks=[];updCounts();renderTasks();
+      setSyncing(false,'Task not found');
+      return;
+    }
+
+    // Convert OData results → internal order/task format
+    orders=parseODataResults(results);
+    tasks=orders.flatMap(o=>o.tasks);
+    const now=new Date();
+    document.getElementById('stime').textContent='OData · '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    updCounts();renderTasks();
+    showToast(results.length+' task'+(results.length!==1?'s':'')+' found via OData ✓');
+  }catch(e){
+    console.error('OData sync error:',e);
+    showGlobalErr('OData Query Failed', e.message);
+    document.getElementById('stime').textContent='OData sync failed';
+  }finally{ setSyncing(false); }
+}
+
+// Parse OData JSON → our internal order/task structure
+function parseODataResults(results){
+  // Group by ProductionOrderID (or lot) so cards group correctly
+  const orderMap={};
+  results.forEach(r=>{
+    const orderId  = r.ProductionOrderID || r.ProductionLotID || r.ID || '—';
+    const taskId   = r.ID || r.TaskID || '—';
+    const objectId = r.ObjectID || '';
+    const statusCode = r.StatusCode || r.ProcessingStatusCode || '3';
+    const taskType   = (r.OperationTypeCode==='10'||r.TaskTypeCode==='10')?'Supply':'Make';
+    const product    = r.ItemProductDescription || r.ProductID || r.MainOutputProduct || 'Production Task';
+    const site       = r.SiteID || r.PlantID || '—';
+    const qty        = (r.PlannedQuantity||'')+(r.PlannedQuantityUnitCode?' '+r.PlannedQuantityUnitCode:'');
+    const startDate  = fmtDate(r.PlannedStartDate||r.StartDate||'');
+    const endDate    = fmtDate(r.PlannedEndDate  ||r.EndDate  ||'');
+
+    const task={
+      id:         orderId+'-T'+taskId,
+      lotId:      r.ProductionLotID   || orderId,
+      lotUUID:    r.ProductionLotUUID || '',
+      orderId,
+      taskId,
+      objectId,                                // ← OData ObjectID for confirm
+      product,
+      productCode:r.ProductID || '',
+      site,
+      taskType,
+      resource:   r.MainResourceID || '—',
+      qty:        qty.trim() || '—',
+      startDate,
+      endDate,
+      rawSC:      statusCode,
+      status:     SL[statusCode]||statusCode,
+      assignedTo: null,
+      confirmed:  false,
+      _odata: true,  // flag: use OData confirm path
+    };
+
+    if(!orderMap[orderId]){
+      orderMap[orderId]={
+        orderId,
+        lotId:      r.ProductionLotID || orderId,
+        productName:product,
+        productCode:r.ProductID||'',
+        site,
+        startDate,
+        endDate:    fmtDate(r.PlannedEndDate||r.EndDate||''),
+        rawSC:      statusCode,
+        tasks:[],
+        assignedTo:null,
+        confirmed:false,
+      };
+    }
+    orderMap[orderId].tasks.push(task);
+  });
+  return Object.values(orderMap);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── SOAP SYNC (no Task ID) ───────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
 async function syncFromByD(){
-  const btn=document.getElementById('sbtn');
-  btn.classList.add('spinning');btn.disabled=true;
-  document.getElementById('stime').textContent='Syncing…';
-  showLoading('Connecting to SAP ByD…');
-  const count=parseInt(document.getElementById('fCount').value)||100;
+  setSyncing(true,'Connecting to SAP ByD…');
+  hideGlobalErr();
+  const count   =parseInt(document.getElementById('fCount').value)||100;
   const dateFrom=document.getElementById('fDateFrom').value||'';
-  const dateTo=document.getElementById('fDateTo').value||'';
-  const orderId=document.getElementById('fOrderId').value.trim()||'';
+  const dateTo  =document.getElementById('fDateTo').value||'';
+  const orderId =document.getElementById('fOrderId').value.trim()||'';
   try{
     const res=await fetch(PROXY_URL,{
       method:'POST',
@@ -366,47 +532,46 @@ async function syncFromByD(){
     });
     const xml=await res.text();
     rawXml=xml;
-    if(res.status===401)throw new Error('Authentication failed (401). Check your credentials.');
+    if(res.status===401)throw new Error('Authentication failed (401).');
     if(!res.ok)throw new Error('SAP ByD returned HTTP '+res.status);
     let allOrders=parseLots(xml);
     allOrders=allOrders.filter(o=>!['4','5','6'].includes(o.rawSC));
     if(orderId){
-      // Flexible match: exact, trimmed, or number-only comparison
-      const oid = orderId.trim();
+      const oid=orderId.trim();
       allOrders=allOrders.filter(o=>
-        o.orderId===oid ||
-        o.lotId===oid ||
-        (o.orderId||'').replace(/^0+/,'')===oid.replace(/^0+/,'') ||
+        o.orderId===oid||o.lotId===oid||
+        (o.orderId||'').replace(/^0+/,'')===oid.replace(/^0+/,'')||
         (o.lotId||'').replace(/^0+/,'')===oid.replace(/^0+/,'')
       );
     }
-    if(count && count<allOrders.length) allOrders=allOrders.slice(0,count);
-    orders=allOrders; tasks=orders.flatMap(o=>o.tasks);
+    if(count&&count<allOrders.length)allOrders=allOrders.slice(0,count);
+    orders=allOrders;tasks=orders.flatMap(o=>o.tasks);
     const now=new Date();
-    document.getElementById('stime').textContent='Synced '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('stime').textContent='SOAP · '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
     updCounts();renderTasks();
-    showToast(orders.length+' production order'+(orders.length!==1?'s':'')+' loaded ✓');
+    showToast(orders.length+' order'+(orders.length!==1?'s':'')+' loaded ✓');
   }catch(e){
     showErrState(e.message);
     document.getElementById('stime').textContent='Sync failed';
     showToast('Error: '+e.message.slice(0,55));
-  }finally{btn.classList.remove('spinning');btn.disabled=false;}
+  }finally{ setSyncing(false); }
 }
 
+function setSyncing(on, msg='Syncing…'){
+  const btn=document.getElementById('sbtn');
+  btn.classList.toggle('spinning',on);
+  btn.disabled=on;
+  if(on) showLoading(msg);
+}
+
+// ── SOAP XML parser (unchanged from original) ────────────────────────────
 function parseLots(xmlText){
   const doc=new DOMParser().parseFromString(xmlText,'text/xml');
   const fault=doc.querySelector('faultstring');
   if(fault)throw new Error('SOAP Fault: '+fault.textContent);
-
-  const getText=(node,tag)=>{
-    if(!node)return'';
-    const el=node.querySelector(tag);
-    return el?el.textContent.trim():'';
-  };
-
+  const getText=(node,tag)=>{if(!node)return'';const el=node.querySelector(tag);return el?el.textContent.trim():'';};
   const orderList=[];
   const lotNodes=[...doc.querySelectorAll('ProductionLot')];
-
   lotNodes.forEach(lot=>{
     const lotId=getText(lot,'ProductionLotID');
     const lotUUID=getText(lot,'ProductionLotUUID');
@@ -417,15 +582,9 @@ function parseLots(xmlText){
     const endRaw=getText(lot,'ProductionEndDate');
     const lotStatusNode=lot.querySelector('ProductionLotStatus');
     const lotSC=getText(lotStatusNode,'Life_Cycle_Status_Code')||'3';
-
-    // Get finished product name from any Make group
     let orderProductName=mainProduct;
     const allMO=[...lot.querySelectorAll('MaterialOutput')];
-    if(allMO.length){
-      const lastDesc=getText(allMO[allMO.length-1],'ProductDescription');
-      if(lastDesc) orderProductName=lastDesc;
-    }
-
+    if(allMO.length){const lastDesc=getText(allMO[allMO.length-1],'ProductDescription');if(lastDesc)orderProductName=lastDesc;}
     const orderTasks=[];
     const groups=[...lot.querySelectorAll('ConfirmationGroup')];
     groups.forEach(grp=>{
@@ -437,112 +596,63 @@ function parseLots(xmlText){
       const taskStatusCode=getText(statusNode,'ProcessingStatusCode')||lotSC;
       const opTypeCode=getText(taskNode,'OperationTypeCode');
       const taskType=opTypeCode==='10'?'Supply':'Make';
-
       const opNode=grp.querySelector('Operation');
       const resource=getText(opNode,'ConfirmMainResourceID')||'—';
-
       const rpNode=grp.querySelector('ReportingPoint');
-      let qty='—', rpUUID='', rpID='', rpUnitCode='EA';
-      if(rpNode){
-        const qEl=rpNode.querySelector('PlannedQuantity');
-        if(qEl){ qty=qEl.textContent.trim()+' '+(qEl.getAttribute('unitCode')||''); rpUnitCode=qEl.getAttribute('unitCode')||'EA'; }
-        rpUUID=getText(rpNode,'ReportingPointUUID');
-        rpID=getText(rpNode,'ReportingPointID');
-      } else {
-        const moNode=grp.querySelector('MaterialOutput');
-        if(moNode){
-          const qEl=moNode.querySelector('PlannedQuantity');
-          if(qEl){ qty=qEl.textContent.trim()+' '+(qEl.getAttribute('unitCode')||''); rpUnitCode=qEl.getAttribute('unitCode')||'EA'; }
-        }
-      }
-
-      // Parse MaterialInput nodes — needed for confirm SOAP
+      let qty='—',rpUUID='',rpID='',rpUnitCode='EA';
+      if(rpNode){const qEl=rpNode.querySelector('PlannedQuantity');if(qEl){qty=qEl.textContent.trim()+' '+(qEl.getAttribute('unitCode')||'');rpUnitCode=qEl.getAttribute('unitCode')||'EA';}rpUUID=getText(rpNode,'ReportingPointUUID');rpID=getText(rpNode,'ReportingPointID');}
+      else{const moNode=grp.querySelector('MaterialOutput');if(moNode){const qEl=moNode.querySelector('PlannedQuantity');if(qEl){qty=qEl.textContent.trim()+' '+(qEl.getAttribute('unitCode')||'');rpUnitCode=qEl.getAttribute('unitCode')||'EA';}}}
       const miNodes=[...grp.querySelectorAll('MaterialInput')];
-      const materialInputs=miNodes.map(mi=>{
-        const qEl=mi.querySelector('ConfirmQuantity')||mi.querySelector('PlannedQuantity');
-        return {
-          uuid:     getText(mi,'MaterialInputUUID'),
-          productId:getText(mi,'ProductID'),
-          siteId:   getText(mi,'SiteID')||site,
-          identifiedStockId: getText(mi,'IdentifiedStockID'),
-          confirmQty: qEl?qEl.textContent.trim():'',
-          unitCode:   qEl?qEl.getAttribute('unitCode')||rpUnitCode:rpUnitCode,
-          confirmMethodCode: getText(mi,'ConfirmationMethodCode')||'2',
-        };
-      });
-
+      const materialInputs=miNodes.map(mi=>{const qEl=mi.querySelector('ConfirmQuantity')||mi.querySelector('PlannedQuantity');return{uuid:getText(mi,'MaterialInputUUID'),productId:getText(mi,'ProductID'),siteId:getText(mi,'SiteID')||site,identifiedStockId:getText(mi,'IdentifiedStockID'),confirmQty:qEl?qEl.textContent.trim():'',unitCode:qEl?qEl.getAttribute('unitCode')||rpUnitCode:rpUnitCode,confirmMethodCode:getText(mi,'ConfirmationMethodCode')||'2'};});
       const moNodes=[...grp.querySelectorAll('MaterialOutput')];
       let productDesc=mainProduct;
-      // Parse MaterialOutput UUIDs and quantities for confirm step 1
-      const materialOutputs=moNodes.map(mo=>{
-        const qEl=mo.querySelector('ConfirmedQuantity')||mo.querySelector('PlannedQuantity');
-        return {
-          uuid:     getText(mo,'MaterialOutputUUID'),
-          productId:getText(mo,'ProductID'),
-          confirmedQty: qEl?qEl.textContent.trim():'1',
-          unitCode:     qEl?qEl.getAttribute('unitCode')||rpUnitCode:rpUnitCode,
-        };
-      }).filter(mo=>mo.uuid); // only include ones with UUID
-      if(moNodes.length>0){
-        const targetMO=taskType==='Make'?moNodes[moNodes.length-1]:moNodes[0];
-        const desc=getText(targetMO,'ProductDescription');
-        if(desc) productDesc=desc;
-      }
-
+      const materialOutputs=moNodes.map(mo=>{const qEl=mo.querySelector('ConfirmedQuantity')||mo.querySelector('PlannedQuantity');return{uuid:getText(mo,'MaterialOutputUUID'),productId:getText(mo,'ProductID'),confirmedQty:qEl?qEl.textContent.trim():'1',unitCode:qEl?qEl.getAttribute('unitCode')||rpUnitCode:rpUnitCode};}).filter(mo=>mo.uuid);
+      if(moNodes.length>0){const targetMO=taskType==='Make'?moNodes[moNodes.length-1]:moNodes[0];const desc=getText(targetMO,'ProductDescription');if(desc)productDesc=desc;}
       const actNode=grp.querySelector('Activity');
       const startDate=fmtDate(getText(actNode,'StartDateTime')||startRaw);
       const endDate=fmtDate(getText(actNode,'EndDateTime')||endRaw);
-
-      orderTasks.push({
-        id:lotId+'-T'+taskId,
-        lotId, lotUUID, orderId, taskId, taskUUID, cgUUID,
-        rpUUID, rpID, rpUnitCode,
-        materialInputs, materialOutputs,
-        product:productDesc,
-        productCode:mainProduct,
-        site, taskType, resource,
-        qty:qty.trim(),
-        startDate, endDate,
-        rawSC:taskStatusCode,
-        status:SL[taskStatusCode]||taskStatusCode,
-        assignedTo:null, confirmed:false,
-        operationId:getText(opNode,'OperationID')||getText(actNode,'OperationID'),
-      });
+      orderTasks.push({id:lotId+'-T'+taskId,lotId,lotUUID,orderId,taskId,taskUUID,cgUUID,rpUUID,rpID,rpUnitCode,materialInputs,materialOutputs,product:productDesc,productCode:mainProduct,site,taskType,resource,qty:qty.trim(),startDate,endDate,rawSC:taskStatusCode,status:SL[taskStatusCode]||taskStatusCode,assignedTo:null,confirmed:false,objectId:'',_odata:false});
     });
-
-    orderList.push({
-      orderId,
-      lotId,
-      productName: orderProductName,
-      productCode: mainProduct,
-      site,
-      startDate: fmtDate(startRaw),
-      endDate: fmtDate(endRaw),
-      rawSC: lotSC,
-      tasks: orderTasks,
-      assignedTo: null,
-      confirmed: false,
-    });
+    orderList.push({orderId,lotId,productName:orderProductName,productCode:mainProduct,site,startDate:fmtDate(startRaw),endDate:fmtDate(endRaw),rawSC:lotSC,tasks:orderTasks,assignedTo:null,confirmed:false});
   });
   return orderList;
 }
 
 function fmtDate(r){if(!r)return'—';return r.includes('T')?r.split('T')[0]:r;}
 
+// ── UI helpers ───────────────────────────────────────────────────────────
 function showLoading(msg){
   document.getElementById('taskList').innerHTML=`<div class="es"><div class="spin-ring"></div><div class="etitle" style="color:var(--g600)">${msg}</div><div class="esub">my433447.businessbydesign.cloud.sap</div></div>`;
 }
 function showErrState(msg){
-  document.getElementById('taskList').innerHTML=`<div class="es"><div class="ei" style="background:var(--red-light)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#B02A2A" stroke-width="1.5"/><path d="M12 8v5" stroke="#B02A2A" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r=".8" fill="#B02A2A"/></svg></div><div class="etitle" style="color:var(--red)">Connection Failed</div><div class="esub">${msg}<br><br><small>Tip: CORS restricts direct browser→SAP calls. Deploy a backend proxy or run as a native mobile app for production use.</small></div><button class="errbtn" onclick="syncFromByD()">Retry</button></div>`;
+  document.getElementById('taskList').innerHTML=`<div class="es"><div class="ei" style="background:var(--red-light)"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="#B02A2A" stroke-width="1.5"/><path d="M12 8v5" stroke="#B02A2A" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="16" r=".8" fill="#B02A2A"/></svg></div><div class="etitle" style="color:var(--red)">Connection Failed</div><div class="esub">${msg}</div><button class="errbtn" onclick="syncNow()">Retry</button></div>`;
+}
+function showGlobalErr(title,msg){
+  document.getElementById('globalErr').style.display='flex';
+  document.getElementById('globalErrTitle').textContent=title;
+  document.getElementById('globalErrMsg').textContent=msg;
+}
+function hideGlobalErr(){
+  document.getElementById('globalErr').style.display='none';
+}
+function showDrErr(msg){
+  const el=document.getElementById('drErr');
+  el.textContent='⚠ '+msg;
+  el.classList.add('show');
+}
+function hideDrErr(){
+  const el=document.getElementById('drErr');
+  el.classList.remove('show');
+  el.textContent='';
 }
 
+// ── Tab / filter / render (unchanged logic) ───────────────────────────────
 function switchTab(t){
   tab=t;
   ['all','mine','unassigned'].forEach(x=>{
     const id='t'+(x==='all'?'All':x==='mine'?'Mine':'Una');
     document.getElementById(id).classList.toggle('active',x===t);
-  });
-  renderTasks();
+  });renderTasks();
 }
 function setFilter(f,el){
   filter=f;
@@ -552,10 +662,7 @@ function setFilter(f,el){
 function getVis(){
   return orders.filter(o=>{
     const to=tab==='all'?true:tab==='mine'?o.assignedTo===me:!o.assignedTo;
-    const fo=filter==='All'?true:
-      filter==='Make'?o.tasks.some(t=>t.taskType==='Make'):
-      filter==='Supply'?o.tasks.some(t=>t.taskType==='Supply'):
-      o.rawSC===filter;
+    const fo=filter==='All'?true:filter==='Make'?o.tasks.some(t=>t.taskType==='Make'):filter==='Supply'?o.tasks.some(t=>t.taskType==='Supply'):o.rawSC===filter;
     return to&&fo;
   });
 }
@@ -575,16 +682,10 @@ function renderTasks(){
     const hdrClass=o.confirmed?' conf':'';
     const w=o.assignedTo?WORKERS.find(x=>x.id===o.assignedTo):null;
     const statusLabel=o.confirmed?'Confirmed':(SL[o.rawSC]||o.rawSC);
-
-    // Filter tasks inside order based on current filter
-    const visibleTasks=filter==='All'?o.tasks:
-      filter==='Supply'?o.tasks.filter(t=>t.taskType==='Supply'):
-      filter==='Make'?o.tasks.filter(t=>t.taskType==='Make'):o.tasks;
-
+    const visibleTasks=filter==='All'?o.tasks:filter==='Supply'?o.tasks.filter(t=>t.taskType==='Supply'):filter==='Make'?o.tasks.filter(t=>t.taskType==='Make'):o.tasks;
     const taskRows=visibleTasks.map(t=>{
       const tIcon=t.taskType==='Supply'?'📦':'⚙️';
       const tIconClass=t.taskType==='Supply'?'supply':'make';
-      const tStatus=t.confirmed?'Confirmed':(SL[t.rawSC]||t.rawSC);
       return `<div class="task-row${t.confirmed?' conf':''}"
         onmousedown="stHold('${t.id}')" onmouseup="enHold()" onmouseleave="enHold()"
         ontouchstart="stHold('${t.id}')" ontouchend="enHold()">
@@ -601,7 +702,6 @@ function renderTasks(){
         </div>
       </div>`;
     }).join('');
-
     return `<div class="order-card" style="animation-delay:${i*.04}s">
       <div class="order-header${hdrClass}" onclick="toggleOrder('${o.orderId}')">
         <div class="oh-left">
@@ -631,37 +731,49 @@ function renderTasks(){
     </div>`;
   }).join('');
 }
-
-function toggleOrder(orderId){
-  const el=document.getElementById('ord-'+orderId);
-  if(el) el.style.display=el.style.display==='none'?'':'none';
-}
-
+function toggleOrder(orderId){const el=document.getElementById('ord-'+orderId);if(el)el.style.display=el.style.display==='none'?'':'none';}
 function stHold(id){holdT=setTimeout(()=>openDr(id),700);}
 function enHold(){clearTimeout(holdT);}
 
-function qConfirm(e,id){
+// ── Quick-confirm (card button) — uses OData if task has objectId ─────────
+async function qConfirm(e,id){
   e.stopPropagation();
-  // find in all orders' tasks
   let found=null;
-  orders.forEach(o=>{ const t=o.tasks.find(x=>x.id===id); if(t) found=t; });
+  orders.forEach(o=>{const t=o.tasks.find(x=>x.id===id);if(t)found=t;});
   if(!found||found.confirmed)return;
-  found.confirmed=true; found.status='Confirmed';
-  updCounts();renderTasks();showToast('Task confirmed ✓');
+  if(found._odata&&found.objectId){
+    await doODataConfirm(found, null, null);
+  } else {
+    found.confirmed=true;found.status='Confirmed';
+    updCounts();renderTasks();showToast('Task confirmed ✓');
+  }
 }
-function qConfirmOrder(e,orderId){
+async function qConfirmOrder(e,orderId){
   e.stopPropagation();
   const o=orders.find(x=>x.orderId===orderId);
   if(!o||o.confirmed)return;
-  o.confirmed=true; o.tasks.forEach(t=>{t.confirmed=true;t.status='Confirmed';});
+  // Confirm each task in sequence
+  for(const t of o.tasks){
+    if(!t.confirmed){
+      if(t._odata&&t.objectId){
+        const ok=await doODataConfirm(t,null,null,true);
+        if(!ok)return;
+      } else {
+        t.confirmed=true;t.status='Confirmed';
+      }
+    }
+  }
+  o.confirmed=true;
   updCounts();renderTasks();showToast('Order #'+orderId+' confirmed ✓');
 }
 
+// ── Drawer open ───────────────────────────────────────────────────────────
 function openDr(id){
   const t=orders.flatMap(o=>o.tasks).find(x=>x.id===id);if(!t)return;
   openId=id;selAss=t.assignedTo;
+  hideDrErr();
   document.getElementById('dtitle').textContent=t.product;
-  document.getElementById('dsub').textContent=t.id;
+  document.getElementById('dsub').textContent=t.id+(t.objectId?' · OID:'+t.objectId.slice(0,8)+'…':'');
   const sc=t.confirmed?'chipC':(SC[t.rawSC]||'chipX');
   const sl=t.confirmed?'Confirmed':(SL[t.rawSC]||t.rawSC);
   document.getElementById('dgrid').innerHTML=[
@@ -674,7 +786,9 @@ function openDr(id){
     ['Site',t.site||'—'],
     ['Product Code',t.productCode||'—'],
     ['Order ID',t.orderId||'—'],
-    ['Lot ID',t.lotId||'—'],
+    ['Task ID',t.taskId||'—'],
+    ['Object ID',t.objectId?t.objectId.slice(0,16)+'…':'—'],
+    ['Mode',t._odata?'OData':'SOAP'],
   ].map(([l,v])=>`<div class="dfield"><div class="dlbl">${l}</div><div class="dval">${v}</div></div>`).join('');
   document.getElementById('alist').innerHTML=WORKERS.map(w=>
     `<div class="ap${selAss===w.id?' sel':''}" id="ap${w.id}" onclick="selA('${w.id}')">
@@ -687,7 +801,6 @@ function openDr(id){
   btn.disabled=t.confirmed;
   document.getElementById('dov').classList.add('open');
 }
-
 function selA(id){
   selAss=selAss===id?null:id;
   document.querySelectorAll('.ap').forEach(el=>{
@@ -699,130 +812,128 @@ function selA(id){
   });
 }
 
+// ── Drawer confirm button ────────────────────────────────────────────────
 async function confirmDr(){
   if(!openId)return;
   const t=orders.flatMap(o=>o.tasks).find(x=>x.id===openId);
   if(!t||t.confirmed)return;
+  hideDrErr();
 
-  // Use stored unit code from SAP, fallback to parsing qty string
-  const qtyParts=(t.qty||'1 EA').trim().split(' ');
-  const confirmedQty=parseFloat(qtyParts[0])||1;
-  const unitCode=t.rpUnitCode||qtyParts[1]||'EA';
-
-  // Debug: log all UUIDs to console
-  console.log('Task UUIDs:', {
-    lotId: t.lotId, lotUUID: t.lotUUID,
-    cgUUID: t.cgUUID, taskId: t.taskId, taskUUID: t.taskUUID,
-    materialOutputs: t.materialOutputs
-  });
-
-  if(!t.taskUUID){
-    showToast('Missing ProducionTaskUUID — check console for details');
-    console.error('MISSING taskUUID. Full task:', JSON.stringify(t));
-    return;
+  if(t._odata){
+    // OData path
+    if(!t.objectId){ showDrErr('No ObjectID available — re-sync this task.'); return; }
+    const btn=document.getElementById('dcbtn');
+    btn.textContent='Confirming…';btn.disabled=true;
+    const ok=await doODataConfirm(t, btn, 'Confirm Task');
+    if(ok){
+      if(selAss)t.assignedTo=selAss;
+      const o=orders.find(x=>x.lotId===t.lotId||x.orderId===t.orderId);
+      if(o&&o.tasks.every(x=>x.confirmed))o.confirmed=true;
+      updCounts();renderTasks();closeDrD();
+      showToast('✓ Confirmed in SAP ByD via OData');
+    }
+  } else {
+    // Legacy SOAP path
+    await confirmDrSOAP(t);
   }
-  if(!t.lotUUID){ showToast('Missing lotUUID — re-sync'); return; }
-  if(!t.cgUUID){  showToast('Missing cgUUID — re-sync');  return; }
+}
 
-  const btn=document.getElementById('dcbtn');
-  btn.textContent='Confirming…'; btn.disabled=true;
-
-  // Build payload — include ReportingPointUUID if available
-  const payload={
-    lotId:     t.lotId,
-    lotUUID:   t.lotUUID,
-    cgUUID:    t.cgUUID,
-    taskId:    t.taskId,
-    taskUUID:  t.taskUUID,
-    materialOutputs: (t.materialOutputs||[]).map(mo=>({
-      ...mo,
-      confirmedQty: confirmedQty,
-      unitCode:     unitCode,
-    })),
-  };
-
-  console.log('Confirm payload:', JSON.stringify(payload));
-
+// ══════════════════════════════════════════════════════════════════════════
+// ── OData Confirm (calls proxy /task-confirm) ────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+async function doODataConfirm(task, btnEl, btnResetText, silent=false){
   try{
-    const CONFIRM_URL=PROXY_URL.replace('/sync','/confirm');
     const res=await fetch(CONFIRM_URL,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
+      body:JSON.stringify({objectId: task.objectId})
     });
-    const xml=await res.text();
-    console.log('SAP confirm response:', xml);
+    const text=await res.text();
+    rawXml=text;                                    // store for "view raw"
+    console.log('OData confirm response (HTTP '+res.status+'):', text);
 
-    if(!res.ok) throw new Error('HTTP '+res.status+': '+xml.slice(0,200));
+    // Try to parse as JSON for SAP OData error
+    let errMsg=null;
+    try{
+      const j=JSON.parse(text);
+      if(j.error) errMsg=j.error.message?.value||JSON.stringify(j.error);
+    }catch(_){}
 
-    const doc2=new DOMParser().parseFromString(xml,'text/xml');
-    const fault=doc2.querySelector('faultstring');
-    if(fault) throw new Error('SAP Fault: '+fault.textContent);
-
-    // Check all log items for errors
-    const logItems=[...doc2.querySelectorAll('ProductionLotLog')];
-    const errors=logItems.filter(l=>{
-      const sev=l.querySelector('SeverityCode');
-      return sev&&(sev.textContent==='E'||sev.textContent==='A');
-    });
-    if(errors.length){
-      const msg=errors.map(e=>e.querySelector('Note')?e.querySelector('Note').textContent:'').join('; ');
-      throw new Error('SAP Error: '+msg);
+    if(!res.ok||errMsg){
+      const msg=errMsg||('HTTP '+res.status+': '+text.slice(0,200));
+      if(!silent) showDrErr(msg);
+      else showGlobalErr('Confirm Failed',msg);
+      if(btnEl){btnEl.textContent=btnResetText;btnEl.disabled=false;}
+      showToast('Confirm failed ✗');
+      return false;
     }
 
-    const excMsg=doc2.querySelector('ExceptionMessage Message');
-    if(excMsg&&excMsg.textContent) throw new Error('SAP: '+excMsg.textContent);
-
     // Success
-    if(selAss) t.assignedTo=selAss;
-    t.confirmed=true; t.status='Confirmed';
-    const o=orders.find(x=>x.lotId===t.lotId);
-    if(o&&o.tasks.every(x=>x.confirmed)) o.confirmed=true;
-    updCounts(); renderTasks(); closeDrD();
-    showToast('\u2713 Confirmed in SAP ByD');
+    task.confirmed=true;task.status='Confirmed';
+    if(!silent){updCounts();renderTasks();}
+    return true;
   }catch(e){
-    console.error('Confirm error:', e);
-    showToast('Confirm failed: '+e.message.slice(0,80));
-    btn.textContent='Confirm Task'; btn.disabled=false;
+    const msg='Network error: '+e.message;
+    if(!silent)showDrErr(msg);
+    else showGlobalErr('Confirm Failed',msg);
+    if(btnEl){btnEl.textContent=btnResetText;btnEl.disabled=false;}
+    showToast('Confirm failed ✗');
+    return false;
+  }
+}
+
+// ── Legacy SOAP confirm (fallback for SOAP-synced tasks) ─────────────────
+async function confirmDrSOAP(t){
+  const qtyParts=(t.qty||'1 EA').trim().split(' ');
+  const confirmedQty=parseFloat(qtyParts[0])||1;
+  const unitCode=t.rpUnitCode||qtyParts[1]||'EA';
+  if(!t.taskUUID){showDrErr('Missing ProducionTaskUUID — re-sync.');return;}
+  if(!t.lotUUID){showDrErr('Missing lotUUID — re-sync.');return;}
+  if(!t.cgUUID){showDrErr('Missing cgUUID — re-sync.');return;}
+  const btn=document.getElementById('dcbtn');
+  btn.textContent='Confirming…';btn.disabled=true;
+  const SOAP_CONFIRM=BASE_URL+'/confirm';
+  const payload={lotId:t.lotId,lotUUID:t.lotUUID,cgUUID:t.cgUUID,taskId:t.taskId,taskUUID:t.taskUUID,
+    materialOutputs:(t.materialOutputs||[]).map(mo=>({...mo,confirmedQty,unitCode}))};
+  try{
+    const res=await fetch(SOAP_CONFIRM,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const xml=await res.text();rawXml=xml;
+    if(!res.ok)throw new Error('HTTP '+res.status+': '+xml.slice(0,200));
+    const doc2=new DOMParser().parseFromString(xml,'text/xml');
+    const fault=doc2.querySelector('faultstring');if(fault)throw new Error('SOAP Fault: '+fault.textContent);
+    const errors=[...doc2.querySelectorAll('ProductionLotLog')].filter(l=>{const s=l.querySelector('SeverityCode');return s&&(s.textContent==='E'||s.textContent==='A');});
+    if(errors.length){const msg=errors.map(e=>e.querySelector('Note')?e.querySelector('Note').textContent:'').join('; ');throw new Error('SAP Error: '+msg);}
+    if(selAss)t.assignedTo=selAss;
+    t.confirmed=true;t.status='Confirmed';
+    const o=orders.find(x=>x.lotId===t.lotId);
+    if(o&&o.tasks.every(x=>x.confirmed))o.confirmed=true;
+    updCounts();renderTasks();closeDrD();
+    showToast('✓ Confirmed in SAP ByD via SOAP');
+  }catch(e){
+    showDrErr(e.message);
+    btn.textContent='Confirm Task';btn.disabled=false;
   }
 }
 
 function closeDr(e){if(e.target===document.getElementById('dov'))closeDrD();}
-function closeDrD(){document.getElementById('dov').classList.remove('open');openId=null;}
+function closeDrD(){document.getElementById('dov').classList.remove('open');openId=null;hideDrErr();}
 
 function showRaw(){
   document.getElementById('rawtext').textContent=rawXml||'No response yet. Sync first.';
   document.getElementById('rawPanel').classList.add('open');
 }
-
 function showToast(m){
   const t=document.getElementById('toast');
   t.textContent=m;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
+  setTimeout(()=>t.classList.remove('show'),2800);
 }
 </script>
 <script>
-// Force clear all old caches and service workers on every load
 if('serviceWorker' in navigator){
-  // Unregister ALL old service workers first
-  navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(reg=>reg.unregister());
-  });
-  // Clear all caches
-  if('caches' in window){
-    caches.keys().then(keys=>{
-      keys.forEach(key=>caches.delete(key));
-    });
-  }
-  // Re-register fresh
+  navigator.serviceWorker.getRegistrations().then(regs=>{regs.forEach(reg=>reg.unregister());});
+  if('caches' in window){caches.keys().then(keys=>{keys.forEach(key=>caches.delete(key));});}
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js?v=3')
-      .then(reg=>{
-        // Force update immediately
-        reg.update();
-        console.log('SW registered v3');
-      })
-      .catch(e=>console.log('SW error',e));
+    navigator.serviceWorker.register('sw.js?v=4').then(reg=>{reg.update();}).catch(e=>console.log('SW error',e));
   });
 }
 </script>
